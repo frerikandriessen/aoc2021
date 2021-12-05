@@ -1,11 +1,13 @@
 from typing import List
 
+
 def preprocess_data(data):
     return data.strip().split("\n\n")
 
 
 class BINGO(Exception):
     pass
+
 
 class BingoCard:
     def __init__(self, card_numbers: str):
@@ -42,6 +44,7 @@ class BingoCard:
         self.check_for_bingo()
 
     def check_for_bingo(self):
+        # fmt: off
         card_size = len(self.marked_numbers_map)
 
         # Scan rows for bingo
@@ -59,6 +62,7 @@ class BingoCard:
                 for y in range(card_size)
             ):
                 raise BINGO()
+        # fmt: on
 
     def unmarked_numbers_sum(self):
         return sum(map(int, self.unmarked_numbers))
@@ -93,4 +97,3 @@ def q2(data: List[str]) -> int:
                     return sum * int(number)
                 else:
                     bingo_cards.remove(bingo_card)
-

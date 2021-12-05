@@ -52,7 +52,6 @@ class DiagonalHydrothermalMap(SimpleHydrothermalMap):
             self.mark_coordinate(f"{x},{y}")
 
 
-
 def q1(data: List[str]) -> int:
     hydro_map = SimpleHydrothermalMap()
 

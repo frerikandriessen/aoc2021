@@ -11,8 +11,10 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+
 def preprocess_data(data):
     return data.strip().split("\n")
+
 
 if __name__ == "__main__":
     day = args.DAY
@@ -33,7 +35,7 @@ if __name__ == "__main__":
         exit(1)
 
     solution = importlib.import_module(".solution", f"day{day}")
-    preprocessed_data = getattr(solution, "preprocess_data", preprocess_data)(input_data)
+    pd = getattr(solution, "preprocess_data", preprocess_data)
 
-    print(solution.q1(preprocessed_data))
-    print(solution.q2(preprocessed_data))
+    print(solution.q1(pd(input_data)))
+    print(solution.q2(pd(input_data)))
