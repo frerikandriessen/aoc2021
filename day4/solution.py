@@ -1,160 +1,96 @@
 from typing import List
 
+def preprocess_data(data):
+    return data.strip().split("\n\n")
+
+
+class BINGO(Exception):
+    pass
 
 class BingoCard:
-    def __init__(self):
+    def __init__(self, card_numbers: str):
         self.number_to_coordinate_map = {}
-        self.drawn_numbers_map = [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ]
+        self.layout = []
+        self.marked_numbers_map = []
+        self.unmarked_numbers = set()
 
-    @property
-    def layout(self):
-        card = [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ]
-        print(self.number_to_coordinate_map)
-        for number, coordinates in self.number_to_coordinate_map.items():
-            card[coordinates["y"]][coordinates["x"]] = number
+        rows = card_numbers.split("\n")
+        for y, row_string in enumerate(rows):
+            row = row_string.split()
+            self.layout.append(row)
+            self.marked_numbers_map.append([0] * len(row))
 
-        return card
+            for x, number in enumerate(row):
+                self.number_to_coordinate_map[number] = (x, y)
+                self.unmarked_numbers.add(number)
 
     def __repr__(self):
-        return "\n".join(map(str, self.layout))
+        return "\n".join(["\t".join(row) for row in self.layout])
+
+    def pretty_marked_numbers(self):
+        return "\n".join([" ".join(map(str, row)) for row in self.marked_numbers_map])
 
     def process_drawn_number(self, number):
-        coordinates = self.number_to_coordinate_map.get(number)
-        if coordinates is None:
+        if number not in self.number_to_coordinate_map:
             return
 
-        self.drawn_numbers_map[coordinates["y"]][coordinates["x"]] = 1
+        x, y = self.number_to_coordinate_map[number]
+
+        self.marked_numbers_map[y][x] = 1
+        self.unmarked_numbers.remove(number)
+
+        self.check_for_bingo()
 
     def check_for_bingo(self):
-        card_size = len(self.drawn_numbers_map)
+        card_size = len(self.marked_numbers_map)
 
         # Scan rows for bingo
-        for i in range(card_size):
-            for j in range(card_size):
-                is_drawn = self.drawn_numbers_map[i][j]
-                if not is_drawn:
-                    break
-            else:
-                print(f"BINGO!!!!!!!!!!!")
-                return True
+        for y in range(card_size):
+            if all(
+                self.marked_numbers_map[y][x] == 1
+                for x in range(card_size)
+            ):
+                raise BINGO()
 
         # Scan columns for bingo
-        for i in range(card_size):
-            for j in range(card_size):
-                is_drawn = self.drawn_numbers_map[j][i]
-                if not is_drawn:
-                    break
-            else:
-                print(f"BINGO!!!!!!!!!!!")
-                return True
+        for x in range(card_size):
+            if all(
+                self.marked_numbers_map[y][x] == 1
+                for y in range(card_size)
+            ):
+                raise BINGO()
 
     def unmarked_numbers_sum(self):
-        total_sum = 0
-        for number, coordinates in self.number_to_coordinate_map.items():
-            is_marked = self.drawn_numbers_map[coordinates["y"]][coordinates["x"]]
-            if not is_marked:
-                total_sum += int(number)
-        return total_sum
+        return sum(map(int, self.unmarked_numbers))
+
 
 def q1(data: List[str]) -> int:
-    # Create boards by:
-    # Saving a map with the coordinates for each number, that way when a new number is pulled you can access it in O(1)
-    # Save a meta map with markings
-
-    # Pull new number
-    # Update board with new number    # Assume no boards can win at the same time
-    # Check if board has BINGO by:
-        # Looping through the rows and the columns.
-    # If so: calculate total
     numbers_to_draw: List[str] = data[0].split(",")
 
-    bingo_cards: List[BingoCard] = []
-
-    no_of_cards = int(len(data[1:]) / 6)
-    print(no_of_cards)
-
-    for card_number in range(no_of_cards):
-
-        bingo_card = BingoCard()
-        start_index = card_number * 6 + 2
-
-        for i in range(5):
-            row_of_numbers = data[start_index + i].split()
-            for j, number in enumerate(row_of_numbers):
-                bingo_card.number_to_coordinate_map[number] = {"x": j, "y": i}
-
-        bingo_cards.append(bingo_card)
-    print(bingo_cards[0])
-
+    bingo_cards = [BingoCard(card_numbers) for card_numbers in data[1:]]
 
     for number in numbers_to_draw:
         for bingo_card in bingo_cards:
-            bingo_card.process_drawn_number(number)
-            if bingo_card.check_for_bingo():
-                print(f"Oh yeahhh BINGO!!")
-                print(bingo_card)
-                print(bingo_card.drawn_numbers_map)
-
+            try:
+                bingo_card.process_drawn_number(number)
+            except BINGO:
                 sum = bingo_card.unmarked_numbers_sum()
-                print(sum)
-                print(sum * int(number))
                 return sum * int(number)
 
-
-    for bingo_card in bingo_cards:
-        print(bingo_card.drawn_numbers_map)
 
 def q2(data: List[str]) -> int:
     numbers_to_draw: List[str] = data[0].split(",")
 
-    bingo_cards: List[BingoCard] = []
-
-    no_of_cards = int(len(data[1:]) / 6)
-    print(no_of_cards)
-
-    for card_number in range(no_of_cards):
-
-        bingo_card = BingoCard()
-        start_index = card_number * 6 + 2
-
-        for i in range(5):
-            row_of_numbers = data[start_index + i].split()
-            for j, number in enumerate(row_of_numbers):
-                bingo_card.number_to_coordinate_map[number] = {"x": j, "y": i}
-
-        bingo_cards.append(bingo_card)
-    print(bingo_cards[0])
-
+    bingo_cards = [BingoCard(card_numbers) for card_numbers in data[1:]]
 
     for number in numbers_to_draw:
-        for index, bingo_card in enumerate(list(bingo_cards)):
-            bingo_card.process_drawn_number(number)
-            if bingo_card.check_for_bingo():
-                print(f"BINGO, removing this card")
-                print(bingo_card)
-                print(bingo_card.drawn_numbers_map)
-
-                if len(bingo_cards) != 1:
-                    #print(f"Popping at index {index} from list with lenght: {len(bingo_cards)}")
-                    bingo_cards.remove(bingo_card)
-                else:
+        for bingo_card in list(bingo_cards):
+            try:
+                bingo_card.process_drawn_number(number)
+            except BINGO:
+                if len(bingo_cards) == 1:
                     sum = bingo_card.unmarked_numbers_sum()
-                    print(sum)
-                    print(sum * int(number))
                     return sum * int(number)
+                else:
+                    bingo_cards.remove(bingo_card)
 
-
-    for bingo_card in bingo_cards:
-        print(bingo_card.drawn_numbers_map)
