@@ -1,106 +1,93 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
-def find_neighbours(start_coordinate, data):
-    coordinates = []
-    for y in (-1, 0, 1):
-        for x in (-1, 0, 1):
-            if (y,x) == (0, 0):
-                continue
-            if y != 0 and x != 0:
-                continue
-            coordinate = start_coordinate[0] + y, start_coordinate[1] + x
-            if 0 <= coordinate[0] < len(data) and 0 <= coordinate[x] < len(data[0]):
-                coordinates.append(coordinate)
-    return coordinates
 
-def find_low_points(data: List[str]):
-    low_points = {}
+class HeightMap:
+    def __init__(self, data: List[str]):
+        self._data = data
 
-    for y, line in enumerate(data):
-        for x, value in enumerate(line):
-            coordinates_to_check = find_neighbours((y, x), data)
-            for yc, xc in coordinates_to_check:
-                #if 0 <= yc < len(data) and 0 <= xc < len(line):
-                    # print(f"{y},{x}: {value}")
-                    # print(f"{yc},{xc}: {int(data[yc][xc])}")
-                if int(value) >= int(data[yc][xc]):
-                    break
-            else:
-                low_points[(y,x)] = int(value)
-    return low_points
+    def value_at_location(self, location: Tuple[int, int]) -> int:
+        return int(self._data[location[0]][location[1]])
+
+    def find_neighbours(self, location: Tuple[int, int]) -> List[Tuple[int, int]]:
+        neighbours = []
+        for y in (-1, 0, 1):
+            for x in (-1, 0, 1):
+                if abs(x) == abs(y):
+                    continue
+                neighbour = location[0] + y, location[1] + x
+                if self.is_within_bounds(neighbour):
+                    neighbours.append(neighbour)
+        return neighbours
+
+    def is_within_bounds(self, location: Tuple[int, int]) -> bool:
+        y_within_bounds = 0 <= location[0] < len(self._data)
+        x_within_bounds = 0 <= location[1] < len(self._data[0])
+        return y_within_bounds and x_within_bounds
+
+    def find_local_minima(self) -> Dict[Tuple[int, int], int]:
+        low_points = {}
+        for y, line in enumerate(self._data):
+            for x, value in enumerate(line):
+                if self.is_local_minimum((y, x)):
+                    low_points[(y, x)] = int(value)
+        return low_points
+
+    def is_local_minimum(self, location: Tuple[int, int]) -> bool:
+        y, x = location
+        neighbours = self.find_neighbours(location)
+        for yc, xc in neighbours:
+            if int(self._data[y][x]) >= int(self._data[yc][xc]):
+                return False
+        return True
+
 
 def q1(data: List[str]) -> int:
+    hm = HeightMap(data)
+    low_points = hm.find_local_minima()
+
     risk_level = 0
-    low_points = find_low_points(data)
-    for lp, value in low_points.items():
+    for value in low_points.values():
         risk_level += value + 1
-
-    # for y, line in enumerate(data):
-    #     for x, value in enumerate(line):
-    #         coordinates_to_check = find_neighbours((y, x))
-    #         for yc, xc in coordinates_to_check:
-    #             if 0 <= yc < len(data) and 0 <= xc < len(line):
-    #                 # print(f"{y},{x}: {value}")
-    #                 # print(f"{yc},{xc}: {int(data[yc][xc])}")
-    #                 if int(value) >= int(data[yc][xc]):
-    #                     break
-    #         else:
-    #             risk_level += int(value) + 1
-    #         # value = int(value)
-
-    #         # if y != 0:
-    #         #     if value 
-                
-
     return risk_level
 
 
-def get_neighbours_to_check(coordinate: Tuple[str], data: List[str], already_visited: List[Tuple[int]], already_going_to_check):
-    neighbours_to_check = []
-    coordinates = find_neighbours(coordinate, data)
-    for c in coordinates:
-        if c not in already_visited and c not in already_going_to_check:
-            # print(f"Already visited: {already_visited}")
-            # print(f"This coordinate: {c}")
-            neighbours_to_check.append(c)
-        # else:
-        #     print(f"I'm skipping {c}")
-    return neighbours_to_check
+class BasinVisitor:
+    def __init__(self, start_location: Tuple[int, int], height_map: HeightMap):
+        self.height_map = height_map
 
-def calculate_basin_size(low_point, data):
-    locations_to_check = []
-    already_visited = []
-    locations_in_basin = []
-    locations_to_check = [low_point]
+        self.locations_to_visit: List[Tuple[int, int]] = [start_location]
+        self.already_visited: List[Tuple[int, int]] = []
+        self.locations_in_basin: List[Tuple[int, int]] = []
+
+    def calculate_basin_size(self) -> int:
+        while len(self.locations_to_visit) != 0:
+            new_location = self.locations_to_visit.pop()
+            self.already_visited.append(new_location)
+            if self.height_map.value_at_location(new_location) != 9:
+                self.locations_in_basin.append(new_location)
+                self.locations_to_visit += self.find_unvisited_neighbours(new_location)
+        return len(self.locations_in_basin)
+
+    def find_unvisited_neighbours(
+        self, location: Tuple[int, int]
+    ) -> List[Tuple[int, int]]:
+        unvisited_neighbours = []
+        neighbours = self.height_map.find_neighbours(location)
+        for neighbour in neighbours:
+            if (
+                neighbour not in self.already_visited
+                and neighbour not in self.locations_to_visit
+            ):
+                unvisited_neighbours.append(neighbour)
+        return unvisited_neighbours
 
 
-    while len(locations_to_check) != 0:
-        new_location = locations_to_check.pop()
-        # print(f"Currently checking {new_location}. Already visited: {already_visited}")
-        already_visited.append(new_location)
-        y, x = new_location
-        if int(data[y][x]) != 9:
-            locations_in_basin.append(new_location)
-            neighbours_to_check = get_neighbours_to_check(new_location, data, already_visited, locations_to_check)
-            locations_to_check += neighbours_to_check
-        # print(f"Locations to check: {locations_to_check}")
-    
-    
-    # print(f"Locations in basin: {locations_in_basin}")
-    return len(locations_in_basin)
-    
+def q2(data: List[str]) -> int:
+    hm = HeightMap(data)
+    low_points = hm.find_local_minima()
+    basin_sizes = [BasinVisitor(lp, hm).calculate_basin_size() for lp in low_points]
 
-def q2(data) -> int:
-    low_points = find_low_points(data)
-    print(f"Low points: {low_points}")
-    basin_sizes = []
-    for lp in low_points:
-        size = calculate_basin_size(lp, data)
-        print(size)
-        basin_sizes.append(size)
-
-    largest_three = sorted(basin_sizes)[-3:]
     total = 1
-    for b in largest_three:
+    for b in sorted(basin_sizes)[-3:]:
         total *= b
     return total
