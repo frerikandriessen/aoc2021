@@ -1,81 +1,42 @@
-from typing import List
-
-
-class OccurenceTracker:
-    def __init__(self):
-        self.zeros = 0
-        self.ones = 0
-
-    def most_common(self, default=None) -> str:
-        if self.zeros == self.ones:
-            if default is not None:
-                return default
-            else:
-                raise Exception("I was not prepared to handle this!")
-        if self.zeros > self.ones:
-            return "0"
-        else:
-            return "1"
-
-    def least_common(self, default=None) -> str:
-        if self.zeros == self.ones:
-            if default is not None:
-                return default
-            else:
-                raise Exception("I was not prepared to handle this!")
-        if self.zeros < self.ones:
-            return "0"
-        else:
-            return "1"
-
-    def count_char(self, char: str) -> None:
-        if char == "0":
-            self.zeros += 1
-        else:
-            self.ones += 1
+from typing import List, Literal, Counter as CounterType, Mapping
+from collections import Counter
 
 
 def q1(data: List[str]) -> int:
     line_length = len(data[0])
-    trackers = [OccurenceTracker() for _ in range(line_length)]
+    trackers: List[CounterType[str]] = [Counter() for _ in range(line_length)]
 
     for line in data:
         for i, c in enumerate(line):
-            trackers[i].count_char(c)
+            trackers[i].update(c)
 
-    gamma_string = "".join([tracker.most_common() for tracker in trackers])
+    gamma_string = "".join([tracker.most_common()[0][0] for tracker in trackers])
     gamma = int(gamma_string, 2)
     epsilon = gamma ^ (2 ** line_length - 1)
 
-    return gamma * epsilon
+    return int(gamma * epsilon)
+
+
+def find_rating(
+    data: List[str], dominant_value: Literal["0", "1"], count_direction: Literal[1, -1]
+) -> int:
+    for position in range(len(data[0])):
+        tracker: CounterType[str] = Counter()
+        # primes tracker.most_common() to return dominant_value
+        tracker[dominant_value] = 0
+        bins: Mapping[str, List[str]] = {"0": [], "1": []}
+
+        for line in data:
+            current_char = line[position]
+            tracker[current_char] += count_direction
+            bins[current_char].append(line)
+        data = bins[tracker.most_common(1)[0][0]]
+        if len(data) == 1:
+            break
+    return int(data[0], 2)
 
 
 def q2(data: List[str]) -> int:
-    line_length = len(data[0])
-
-    oxygen_data = list(data)
-    for position in range(line_length):
-        tracker = OccurenceTracker()
-        bins = {"0": [], "1": []}
-        for line in oxygen_data:
-            current_char = line[position]
-            tracker.count_char(current_char)
-            bins[current_char].append(line)
-        oxygen_data = bins[tracker.most_common(default="1")]
-    else:
-        oxygen_rating = int(oxygen_data[0], 2)
-
-    co2_data = list(data)
-    for position in range(line_length):
-        tracker = OccurenceTracker()
-        bins = {"0": [], "1": []}
-        for line in co2_data:
-            current_char = line[position]
-            tracker.count_char(current_char)
-            bins[current_char].append(line)
-        co2_data = bins[tracker.least_common(default="0")]
-        if len(co2_data) == 1:
-            break
-    co2_rating = int(co2_data[0], 2)
-
+    oxygen_rating = find_rating(list(data), dominant_value="1", count_direction=1)
+    co2_rating = find_rating(list(data), dominant_value="0", count_direction=-1)
     return oxygen_rating * co2_rating
