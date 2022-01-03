@@ -13,8 +13,11 @@ parser.add_argument(
     "--test", action="store_true", help="Runs the algorithm on test data"
 )
 parser.add_argument(
-    "--create", action="store_true", help="Creates a folder for this day and downloads your input"
+    "--create",
+    action="store_true",
+    help="Creates a folder for this day and downloads your input",
 )
+parser.add_argument("--lint", action="store_true", help="Lint hem helemaal de moeder")
 args = parser.parse_args()
 
 
@@ -23,7 +26,6 @@ def create_new_day_folder(day: int):
     directory.mkdir(exist_ok=False)
     (directory / "__init__.py").touch()
     (directory / "test_input.txt").touch()
-
 
     standard_solutions_content = textwrap.dedent(
         """\
@@ -42,23 +44,45 @@ def create_new_day_folder(day: int):
 
     aoc_cookie = (Path().parent / "aoc_cookie").read_text()
 
-    r = requests.get(f"https://adventofcode.com/2021/day/{day}/input", headers={"cookie": aoc_cookie})
+    r = requests.get(
+        f"https://adventofcode.com/2021/day/{day}/input", headers={"cookie": aoc_cookie}
+    )
     r.raise_for_status()
     with (directory / "input.txt").open("w", newline="\n") as f:
         f.write(r.text)
-
 
 
 def preprocess_data(data):
     return data.strip().split("\n")
 
 
-if __name__ == "__main__":
+def lint(day):
+    import subprocess
+
+    returncode = 0
+    r = subprocess.run(f"flake8 day{day}", shell=True, capture_output=True)
+    print(r.stdout.decode("utf-8"))
+    returncode = returncode or r.returncode
+    r = subprocess.run(
+        f"black --diff --check day{day}", shell=True, capture_output=True
+    )
+    print(r.stdout.decode("utf-8"))
+    returncode = returncode or r.returncode
+    r = subprocess.run(f"mypy --strict day{day}", shell=True, capture_output=True)
+    print(r.stdout.decode("utf-8"))
+    returncode = returncode or r.returncode
+    return returncode
+
+
+def main():
     day = args.DAY
 
     if args.create:
         create_new_day_folder(day)
         exit(0)
+
+    if args.lint:
+        exit(lint(day))
 
     if args.test:
         input_data_path = Path(f"./day{day}/test_input.txt")
@@ -80,3 +104,7 @@ if __name__ == "__main__":
 
     print(solution.q1(pd(input_data)))
     print(solution.q2(pd(input_data)))
+
+
+if __name__ == "__main__":
+    main()
