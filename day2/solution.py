@@ -1,12 +1,13 @@
 from typing import List
+from abc import ABC, abstractmethod
 
 
-class PositionBase:
-    def __init__(self):
+class PositionBase(ABC):
+    def __init__(self) -> None:
         self.horizontal = 0
         self.depth = 0
 
-    def process_instruction(self, instruction: str):
+    def process_instruction(self, instruction: str) -> None:
         command_map = {
             "forward": self.forward,
             "up": self.up,
@@ -16,8 +17,20 @@ class PositionBase:
         command, value = instruction.split(" ")[0], int(instruction.split(" ")[1])
         command_map[command](value)
 
-    def result(self):
+    def result(self) -> int:
         return self.horizontal * self.depth
+
+    @abstractmethod
+    def forward(self, value: int) -> None:
+        pass
+
+    @abstractmethod
+    def up(self, value: int) -> None:
+        pass
+
+    @abstractmethod
+    def down(self, value: int) -> None:
+        pass
 
 
 class PositionQ1(PositionBase):
@@ -32,7 +45,7 @@ class PositionQ1(PositionBase):
 
 
 class PositionQ2(PositionBase):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.aim = 0
 

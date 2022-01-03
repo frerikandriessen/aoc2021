@@ -2,6 +2,8 @@ import importlib
 from pathlib import Path
 import argparse
 import textwrap
+import subprocess
+from typing import List
 
 import requests
 
@@ -21,7 +23,7 @@ parser.add_argument("--lint", action="store_true", help="Lint hem helemaal de mo
 args = parser.parse_args()
 
 
-def create_new_day_folder(day: int):
+def create_new_day_folder(day: int) -> None:
     directory = Path(__file__).parent / f"day{day}"
     directory.mkdir(exist_ok=False)
     (directory / "__init__.py").touch()
@@ -52,29 +54,27 @@ def create_new_day_folder(day: int):
         f.write(r.text)
 
 
-def preprocess_data(data):
+def preprocess_data(data: str) -> List[str]:
     return data.strip().split("\n")
 
 
-def lint(day):
-    import subprocess
-
+def lint(day: int) -> int:
     returncode = 0
-    r = subprocess.run(f"flake8 day{day}", shell=True, capture_output=True)
-    print(r.stdout.decode("utf-8"))
-    returncode = returncode or r.returncode
-    r = subprocess.run(
-        f"black --diff --check day{day}", shell=True, capture_output=True
-    )
-    print(r.stdout.decode("utf-8"))
-    returncode = returncode or r.returncode
-    r = subprocess.run(f"mypy --strict day{day}", shell=True, capture_output=True)
-    print(r.stdout.decode("utf-8"))
-    returncode = returncode or r.returncode
+    for command in (
+        f"flake8 day{day}",
+        f"black --diff --check day{day}",
+        f"mypy --strict day{day}",
+    ):
+        r = subprocess.run(command, shell=True, capture_output=True)
+        output = r.stdout.decode("utf-8")
+        if output:
+            print(f"===Output for '{command}'===")
+            print(output.strip())
+        returncode = returncode or r.returncode
     return returncode
 
 
-def main():
+def main() -> None:
     day = args.DAY
 
     if args.create:

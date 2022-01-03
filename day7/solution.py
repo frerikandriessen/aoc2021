@@ -1,7 +1,7 @@
 from typing import List
 
 
-def preprocess_data(data):
+def preprocess_data(data: str) -> List[int]:
     return list(map(int, data.strip().split(",")))
 
 
@@ -17,6 +17,9 @@ def q1(crab_positions: List[int]) -> int:
         if lowest_fuel_position is None or lowest_fuel_position[1] > fuel:
             lowest_fuel_position = (alignment_position, fuel)
 
+    if lowest_fuel_position is None:
+        raise Exception("No meaningful calculation could be made")
+
     return lowest_fuel_position[1]
 
 
@@ -27,7 +30,7 @@ def q2(crab_positions: List[int]) -> int:
     # variation of binary search to quicker converge I guess?
     # Not relevant: brute-force was fast enough.
 
-    def triangular_number(n):
+    def triangular_number(n: int) -> int:
         return int(n * (n + 1) / 2)
 
     max_position = max(crab_positions)
@@ -40,5 +43,8 @@ def q2(crab_positions: List[int]) -> int:
 
         if lowest_fuel_position is None or lowest_fuel_position[1] > fuel:
             lowest_fuel_position = (alignment_position, fuel)
+
+    if lowest_fuel_position is None:
+        raise Exception("No meaningful calculation could be made")
 
     return lowest_fuel_position[1]

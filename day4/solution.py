@@ -1,7 +1,7 @@
 from typing import List
 
 
-def preprocess_data(data):
+def preprocess_data(data: str) -> List[str]:
     return data.strip().split("\n\n")
 
 
@@ -10,7 +10,7 @@ class BINGO(Exception):
 
 
 class BingoCard:
-    def __init__(self, card_numbers: str):
+    def __init__(self, card_numbers: str) -> None:
         self.number_to_coordinate_map = {}
         self.layout = []
         self.marked_numbers_map = []
@@ -26,13 +26,13 @@ class BingoCard:
                 self.number_to_coordinate_map[number] = (x, y)
                 self.unmarked_numbers.add(number)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "\n".join(["\t".join(row) for row in self.layout])
 
-    def pretty_marked_numbers(self):
+    def pretty_marked_numbers(self) -> str:
         return "\n".join([" ".join(map(str, row)) for row in self.marked_numbers_map])
 
-    def process_drawn_number(self, number):
+    def process_drawn_number(self, number: str) -> None:
         if number not in self.number_to_coordinate_map:
             return
 
@@ -43,7 +43,7 @@ class BingoCard:
 
         self.check_for_bingo()
 
-    def check_for_bingo(self):
+    def check_for_bingo(self) -> None:
         # fmt: off
         card_size = len(self.marked_numbers_map)
 
@@ -64,7 +64,7 @@ class BingoCard:
                 raise BINGO()
         # fmt: on
 
-    def unmarked_numbers_sum(self):
+    def unmarked_numbers_sum(self) -> int:
         return sum(map(int, self.unmarked_numbers))
 
 
@@ -80,6 +80,8 @@ def q1(data: List[str]) -> int:
             except BINGO:
                 sum = bingo_card.unmarked_numbers_sum()
                 return sum * int(number)
+    else:
+        raise Exception("This should not happen, no bingo was found??")
 
 
 def q2(data: List[str]) -> int:
@@ -97,3 +99,5 @@ def q2(data: List[str]) -> int:
                     return sum * int(number)
                 else:
                     bingo_cards.remove(bingo_card)
+    else:
+        raise Exception("This should not happen, no bingo was found??")

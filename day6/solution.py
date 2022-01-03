@@ -1,11 +1,11 @@
 from typing import List
 
 
-def preprocess_data(data):
+def preprocess_data(data: str) -> List[int]:
     return list(map(int, data.strip().split(",")))
 
 
-def naive_solution(days: int, fish_timers: List[int]):
+def naive_solution(days: int, fish_timers: List[int]) -> int:
     for _ in range(days):
         for index, timer in list(enumerate(fish_timers)):
             if timer == 0:
@@ -16,7 +16,7 @@ def naive_solution(days: int, fish_timers: List[int]):
     return len(fish_timers)
 
 
-def optimized_solution(days: int, fish_timers: List[int]):
+def optimized_solution(days: int, fish_timers: List[int]) -> int:
     FISH_SPAWN_TIME = 7
     FISH_FIRST_SPAWN_TIME = 9
     planned_spawnings = [0] * (days + FISH_FIRST_SPAWN_TIME)

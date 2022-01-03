@@ -14,7 +14,7 @@ def q1(data: List[str]) -> int:
 
 
 def q2(data: List[str]) -> int:
-    def window_sum(start_index):
+    def window_sum(start_index: int) -> int:
         return (
             int(data[start_index])
             + int(data[start_index + 1])
